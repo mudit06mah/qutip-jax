@@ -1,39 +1,33 @@
+import jax
 import jax.numpy as jnp
-from .jaxarray import JaxArray
 import numpy as np
 from qutip.core.data import einsum
 from qutip.core.data.convert import to as _to
+from .jaxarray import JaxArray 
 
-__all__ = []
 
-def einsum_jax(
-        op0, /,
-        subscripts,
-        rest_operands,
-        tensor_shapes,
-        tensor_perms,
-        out_perm,
-        out_shape=None
+@jax.jit(static_argnums=(1, 3, 4, 5, 6))
+def _einsum_jax_core(
+    op0_arr, 
+    subscripts, 
+    rest_arrs, 
+    tensor_shapes, 
+    tensor_perms, 
+    out_perm,
+    out_shape
 ):
-    """
-    JAX / XLA specialization for einsum.
-    """
-    operands = (op0,) + tuple(rest_operands)
+    operands = (op0_arr,) + rest_arrs
     tensors = []
     
-    for op, shape, perm in zip(operands, tensor_shapes, tensor_perms):
-        jax_op = _to(JaxArray, op)
-        
-        arr = jax_op._jxa
+    for arr, shape, perm in zip(operands, tensor_shapes, tensor_perms):
         tensors.append(jnp.transpose(jnp.reshape(arr, shape), perm))
 
-    result = jnp.einsum(subscripts, *tensors)
+    result = jnp.einsum(subscripts, *tensors, optimize=True)
 
-    # Enforce 1x1 shape for Cython dispatcher compatibility on scalars
     if result.shape == ():
-        return JaxArray(jnp.array([[result]], dtype=jnp.complex128))
+        return jnp.array([[result]], dtype=jnp.complex128)
 
-    inv_out_perm = np.argsort(out_perm)
+    inv_out_perm = tuple(np.argsort(out_perm))
     result_physical = jnp.transpose(result, inv_out_perm)
 
     if out_shape is None:
@@ -42,7 +36,36 @@ def einsum_jax(
         cols = int(np.prod(result_physical.shape[half:]))
         out_shape = (rows, cols)
 
-    return JaxArray(jnp.reshape(result_physical, out_shape))
+    return jnp.reshape(result_physical, out_shape)
+
+
+def einsum_jax(
+        op0, /,
+        *rest_operands,
+        subscripts,
+        tensor_shapes,
+        tensor_perms,
+        out_perm,
+        out_shape=None
+):
+    """
+    JAX / XLA specialization for einsum.
+    """
+    # Unwrap QuTiP JaxArrays into raw JAX arrays
+    jax_op0 = _to(JaxArray, op0)._jxa
+    rest_arrs = tuple(_to(JaxArray, op)._jxa for op in rest_operands)
+    
+    tensor_shapes = tuple(tuple(s) for s in tensor_shapes)
+    tensor_perms = tuple(tuple(p) for p in tensor_perms)
+    out_perm = tuple(out_perm)
+    if out_shape is not None:
+        out_shape = tuple(out_shape)
+
+    result_arr = _einsum_jax_core(
+        jax_op0, subscripts, rest_arrs, tensor_shapes, tensor_perms, out_perm, out_shape
+    )
+    
+    return JaxArray(result_arr)
 
 einsum.add_specialisations([
     (JaxArray, JaxArray, einsum_jax),

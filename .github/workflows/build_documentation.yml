@@ -22,7 +22,7 @@ jobs:
 
       - name: Install QuTiP from GitHub
         run: |
-          python -m pip install git+https://github.com/qutip/qutip.git@master
+          python -m pip install git+https://github.com/mudit06mah/qutip.git@data/einsum
           python -c 'import qutip; qutip.about()'
 
       - name: Install qutip-jax from GitHub

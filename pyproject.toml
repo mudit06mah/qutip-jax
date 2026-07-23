@@ -1,7 +1,66 @@
 [build-system]
 requires = [
-    "setuptools",
+    "setuptools>=61.0.0",
     "packaging",
     "wheel",
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "qutip-jax"
+description = "JAX backend for QuTiP"
+readme = "README.md"
+keywords = ["quantum", "physics", "dynamics", "gpu", "linear-algebra"]
+license = { file = "LICENSE.txt" }
+authors = [
+    { name = "Eric Giguere", email = "qutip-admin@googlegroups.com" },
+    { name = "Rochisha Agarwal" },
+    { name = "Shahnawaz Ahmed" }
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: Microsoft :: Windows",
+]
+dependencies = [
+    "qutip>=5.1.0",
+    "jax",
+    "diffrax",
+    "equinox",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://qutip.org"
+"Bug Tracker" = "https://github.com/qutip/qutip-jax/issues"
+Documentation = "https://qutip-jax.readthedocs.io/en/stable/"
+
+[project.entry-points."qutip.family"]
+qutip_jax = "qutip_jax.family"
+
+[project.optional-dependencies]
+tests = [
+    "pytest>=6.0",
+]
+full = [
+    "qutip-jax[tests]",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-Werror --strict-config --strict-markers -W ignore::DeprecationWarning"
+testpaths = [
+    "tests",
+]

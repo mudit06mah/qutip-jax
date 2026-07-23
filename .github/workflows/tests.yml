@@ -37,6 +37,7 @@ jobs:
             python -m pip install jax jax[cpu]
             python -m pip install -e .[full]
             python -m pip install pytest-cov coveralls
+            python -m pip install matplotlib
 
       - name: Package information
         run: |

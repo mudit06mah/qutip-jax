@@ -6,11 +6,11 @@ from qutip.core.data.convert import to as _to
 from .jaxarray import JaxArray 
 
 
-@jax.jit(static_argnums=(1, 3, 4, 5, 6))
+@jax.jit(static_argnums=(2, 3, 4, 5, 6))
 def _einsum_jax_core(
     op0_arr, 
-    subscripts, 
     rest_arrs, 
+    subscripts, 
     tensor_shapes, 
     tensor_perms, 
     out_perm,
@@ -62,7 +62,7 @@ def einsum_jax(
         out_shape = tuple(out_shape)
 
     result_arr = _einsum_jax_core(
-        jax_op0, subscripts, rest_arrs, tensor_shapes, tensor_perms, out_perm, out_shape
+        jax_op0, rest_arrs, subscripts, tensor_shapes, tensor_perms, out_perm, out_shape
     )
     
     return JaxArray(result_arr)

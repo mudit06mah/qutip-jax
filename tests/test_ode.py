@@ -74,7 +74,7 @@ def test_ode_step(dtype):
     ket = basis(3, dtype="jax")
 
     solver = MESolver(H, c_ops, options={"method": "diffrax"})
-    ref_solver = MESolver(H, c_ops, options={"method": "adams"})
+    ref_solver = MESolver(H.to("Dense"), c_ops, options={"method": "adams"})
 
     solver.start(ket, 0)
     ref_solver.start(ket, 0)

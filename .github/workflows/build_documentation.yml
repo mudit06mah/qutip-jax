@@ -14,13 +14,16 @@ jobs:
       - uses: actions/setup-python@v7
         name: Install Python
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: Install documentation dependencies
         run: |
           python -m pip install -r doc/requirements.txt
 
       - name: Install QuTiP from GitHub
+        # Temporary workaround: install QuTiP from GitHub until the required
+        # change is available in a released version of QuTiP. Remove this once
+        # the dependency change has been merged upstream.
         run: |
           python -m pip install git+https://github.com/mudit06mah/qutip.git@data/einsum
           python -c 'import qutip; qutip.about()'

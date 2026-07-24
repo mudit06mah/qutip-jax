@@ -7,27 +7,13 @@ import sys
 # Required third-party imports, must be specified in pyproject.toml.
 import packaging.version
 import setuptools
+from setuptools.command.build_py import build_py
 
 
 def process_options():
     """
-    Determine all runtime options, returning a dictionary of the results.  The
-    keys are:
-        'rootdir': str
-            The root directory of the setup.  Almost certainly the directory
-            that this setup.py file is contained in.
-        'release': bool
-            Is this a release build (True) or a local development build (False)
-    """
-    options = {}
-    options['rootdir'] = os.path.dirname(os.path.abspath(__file__))
-    options = _determine_version(options)
-    return options
-
-
-def _determine_version(options):
-    """
-    Adds the 'short_version', 'version' and 'release' options.
+    Create the options with
+    'rootdir', 'short_version', 'version' and 'release' entries.
 
     Read from the VERSION file to discover the version.  This should be a
     single line file containing valid Python package public identifier (see PEP
@@ -35,20 +21,21 @@ def _determine_version(options):
       4.5.2rc2
       5.0.0
       5.1.1a1
-    We do that here rather than in setup.cfg so we can apply the local
+    We do that here rather than in pyproject.toml so we can apply the local
     versioning number as well.
     """
-    version_filename = os.path.join(options['rootdir'], 'VERSION')
+    rootdir = os.path.dirname(os.path.abspath(__file__))
+    version_filename = os.path.join(rootdir, 'VERSION')
     with open(version_filename, "r") as version_file:
         version_string = version_file.read().strip()
+
     version = packaging.version.parse(version_string)
-    options['short_version'] = str(version.public)
-    options['release'] = not version.is_devrelease
+    short_version = str(version.public)
+    release = not version.is_devrelease
     diff = subprocess.run(["git", "diff", "master"], capture_output=True)
-    if not options['release'] and len(diff.stdout) != 0:
+    if not release and len(diff.stdout) != 0:
         # Put the version string into canonical form, if it wasn't already.
-        version_string = str(version)
-        version_string += "+"
+        version_string = str(version) + "+"
         try:
             git_out = subprocess.run(
                 ('git', 'rev-parse', '--verify', '--short=7', 'HEAD'),
@@ -63,8 +50,13 @@ def _determine_version(options):
         # or a permission error).
         except (subprocess.CalledProcessError, OSError):
             version_string += "nogit"
-    options['version'] = version_string
-    return options
+
+    return {
+        'rootdir': rootdir,
+        'short_version': short_version,
+        'version': version_string,
+        'release': release,
+    }
 
 
 def create_version_py_file(options):
@@ -83,14 +75,20 @@ def create_version_py_file(options):
         f"release = {options['release']}",
     ])
     with open(filename, 'w') as file:
-        print(content, file=file)
+        file.write(content)
+
+
+class CustomBuildPy(build_py):
+    """Custom build_py to generate version.py before packaging."""
+    def run(self):
+        options = process_options()
+        create_version_py_file(options)
+        super().run()
 
 
 if __name__ == "__main__":
     options = process_options()
-    create_version_py_file(options)
-    # Most of the kwargs to setup are defined in setup.cfg; the only ones we
-    # keep here are ones that we have done some compile-time processing on.
     setuptools.setup(
         version=options['version'],
+        cmdclass={'build_py': CustomBuildPy},
     )

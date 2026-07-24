@@ -14,15 +14,6 @@ on:
         description: 'Open issue on failure'
         default: "False"
 
-
-defaults:
-  run:
-    # The slightly odd shell call is to force bash to read .bashrc, which is
-    # necessary for having conda behave sensibly.  We use bash as the shell even
-    # on Windows, since we don't run anything much complicated, and it makes
-    # things much simpler.
-    shell: bash -l {0}
-
 jobs:
   cases:
     if: github.repository == 'qutip/qutip-jax'
@@ -32,15 +23,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.11]
+        python-version: [3.13]
         case-name: [defaults]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/setup-python@v7
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
 
       - name: Install QuTiP from GitHub
@@ -57,7 +47,7 @@ jobs:
 
       - name: Package information
         run: |
-          conda list
+          python -m pip list
           python -c 'import qutip_jax; print(qutip_jax.__version__)'
 
       - name: Run tests

@@ -8,12 +8,18 @@ __all__ = []
 
 def qobj_tree_flatten(qobj):
     children = (qobj.to("jax").data,)
-    aux_data = {
-        "_dims": qobj._dims,
-        # Attribute that depend on the data are not safe to be set.
-        "_isherm": None,
-        "_isunitary": None,
+    aux_data = {"_dims": qobj._dims}
+    # TODO: find a better way to maintain attributes and their
+    # default values (~ Qobj's model)
+    _qobj_cache_attr = {
+            "_isherm": None,
+            "_isunitary": None,
+            "_ishp": None,
+            "_iscp": None,
+            "_istp": None,
+            "_iscptp": None,
     }
+    aux_data |= _qobj_cache_attr
     return (children, aux_data)
 
 

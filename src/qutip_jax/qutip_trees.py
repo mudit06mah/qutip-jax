@@ -6,20 +6,16 @@ from .qobjevo import JaxJitCoeff
 __all__ = []
 
 
+_QOBJ_DEFAULT_STATE = {
+    attr: val
+    for attr, val in Qobj([[0]]).__dict__.items()
+    if attr not in ("_data", "_dims")
+}
+
+
 def qobj_tree_flatten(qobj):
     children = (qobj.to("jax").data,)
-    aux_data = {"_dims": qobj._dims}
-    # TODO: find a better way to maintain attributes and their
-    # default values (~ Qobj's model)
-    _qobj_cache_attr = {
-            "_isherm": None,
-            "_isunitary": None,
-            "_ishp": None,
-            "_iscp": None,
-            "_istp": None,
-            "_iscptp": None,
-    }
-    aux_data |= _qobj_cache_attr
+    aux_data = {"_dims": qobj._dims, **_QOBJ_DEFAULT_STATE}
     return (children, aux_data)
 
 

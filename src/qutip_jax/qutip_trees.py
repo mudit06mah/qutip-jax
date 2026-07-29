@@ -7,7 +7,7 @@ __all__ = []
 
 
 _QOBJ_DEFAULT_STATE = {
-    attr: val
+    attr: None
     for attr, val in Qobj([[0]]).__dict__.items()
     if attr not in ("_data", "_dims")
 }

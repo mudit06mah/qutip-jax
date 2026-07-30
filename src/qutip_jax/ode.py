@@ -5,7 +5,9 @@ import jax.numpy as jnp
 from qutip.solver.mcsolve import MCSolver
 from qutip.solver.mesolve import MESolver
 from qutip.solver.sesolve import SESolver
+from qutip.solver.solver_base import Solver
 from qutip.core import data as _data
+from qutip import QobjEvo
 from qutip_jax import JaxArray
 from qutip_jax.qobjevo import JaxQobjEvo
 
@@ -41,8 +43,14 @@ class DiffraxIntegrator(Integrator):
     }
 
     def __init__(self, solver, options):
-        self.solver = solver
-        self.system = JaxQobjEvo(solver.rhs)
+        # Support both the new entry point method and QobjEvo input
+        if isinstance(solver, Solver):
+            self.solver = solver
+            self.system = JaxQobjEvo(solver.rhs)
+        elif isinstance(solver, QobjEvo):
+            self.rhs = solver
+            self.system = JaxQobjEvo(self.rhs)
+
         self._is_set = False  # get_state can be used and return a valid state.
         self._options = self.integrator_options.copy()
         self.options = options
@@ -138,7 +146,8 @@ class DiffraxIntegrator(Integrator):
     def reset(self, full=False):
         # Reset is called when args are updated.
         # We need to refetch them, but the QobjEvo is a blackbox, so rebuild.
-        self.system = JaxQobjEvo(self.solver.rhs)
+        if hasattr(self, "solver"):
+            self.system = JaxQobjEvo(self.solver.rhs)
 
 
 MCSolver.add_integrator(DiffraxIntegrator, "diffrax")

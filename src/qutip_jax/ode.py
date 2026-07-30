@@ -32,8 +32,7 @@ def dstate(t, y, args):
 
 class DiffraxIntegrator(Integrator):
     method: str = "diffrax"
-    supports_blackbox: bool = False  # No feedback support
-    support_time_dependant: bool = True
+    rhs_format: str = "solver"
     integrator_options: dict = {
         "dt0": 0.0001,
         "solver": diffrax.Tsit5(),
@@ -41,8 +40,9 @@ class DiffraxIntegrator(Integrator):
         "max_steps": 100000,
     }
 
-    def __init__(self, system, options):
-        self.system = JaxQobjEvo(system)
+    def __init__(self, solver, options):
+        self.solver = solver
+        self.system = JaxQobjEvo(solver.rhs)
         self._is_set = False  # get_state can be used and return a valid state.
         self._options = self.integrator_options.copy()
         self.options = options
@@ -134,6 +134,12 @@ class DiffraxIntegrator(Integrator):
     @options.setter
     def options(self, new_options):
         Integrator.options.fset(self, new_options)
+
+    def reset(self, full=False):
+        # Reset is called when args are updated.
+        # We need to refetch them, but the QobjEvo is a blackbox, so rebuild.
+        self.system = JaxQobjEvo(self.solver.rhs)
+
 
 MCSolver.add_integrator(DiffraxIntegrator, "diffrax")
 MESolver.add_integrator(DiffraxIntegrator, "diffrax")

@@ -148,6 +148,8 @@ class DiffraxIntegrator(Integrator):
         # We need to refetch them, but the QobjEvo is a blackbox, so rebuild.
         if hasattr(self, "solver"):
             self.system = JaxQobjEvo(self.solver.rhs)
+        else:
+            self.system = JaxQobjEvo(self.rhs)
 
 
 MCSolver.add_integrator(DiffraxIntegrator, "diffrax")

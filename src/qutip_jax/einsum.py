@@ -25,7 +25,7 @@ def _einsum_jax_core(
     result = jnp.einsum(subscripts, *tensors, optimize=True)
 
     if result.shape == ():
-        return jnp.array([[result]], dtype=jnp.complex128)
+        return jnp.reshape(result, (1, 1))
 
     inv_out_perm = tuple(np.argsort(out_perm))
     result_physical = jnp.transpose(result, inv_out_perm)

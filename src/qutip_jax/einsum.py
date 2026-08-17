@@ -6,7 +6,10 @@ from qutip.core.data.convert import to as _to
 from .jaxarray import JaxArray 
 
 
-@jax.jit(static_argnums=(2, 3, 4, 5, 6))
+from functools import partial
+
+
+@partial(jax.jit, static_argnums=(2, 3, 4, 5, 6))
 def _einsum_jax_core(
     op0_arr, 
     rest_arrs, 

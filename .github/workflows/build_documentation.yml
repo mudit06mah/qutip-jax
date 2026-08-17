@@ -21,11 +21,8 @@ jobs:
           python -m pip install -r doc/requirements.txt
 
       - name: Install QuTiP from GitHub
-        # Temporary workaround: install QuTiP from GitHub until the required
-        # change is available in a released version of QuTiP. Remove this once
-        # the dependency change has been merged upstream.
         run: |
-          python -m pip install git+https://github.com/mudit06mah/qutip.git@data/einsum
+          python -m pip install git+https://github.com/qutip/qutip.git@master
           python -c 'import qutip; qutip.about()'
 
       - name: Install qutip-jax from GitHub
